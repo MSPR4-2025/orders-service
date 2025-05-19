@@ -1,0 +1,15 @@
+services:
+  database:
+    image: postgres:latest
+    environment:
+      - 'POSTGRES_DB=orders-databse'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5433:5432'
+  service:
+    image: mspr4-2025/orders-service
+    ports:
+      - '8081:8080'
+    depends_on:
+      - database
