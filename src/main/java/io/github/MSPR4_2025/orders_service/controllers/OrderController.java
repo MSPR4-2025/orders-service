@@ -57,4 +57,24 @@ public class OrderController {
         
     }
 
+    @DeleteMapping("/{uid}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable UUID uid) {
+        orderService.deleteOrderByUid(uid);
+        log.info("Deleting order: " + uid);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{uid}")
+    public ResponseEntity<Void> updateOrder(@PathVariable UUID uid, @RequestBody OrderCreateDto orderUpdate) {
+        if(orderUpdate.getCustomerUid() == null || orderUpdate.getProductUid() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try{
+            orderService.updateOrderByUid(uid, orderUpdate);
+            log.info("Updating order: " + uid + " productUid : " + orderUpdate.getProductUid() + " customerUid : " + orderUpdate.getCustomerUid());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }
