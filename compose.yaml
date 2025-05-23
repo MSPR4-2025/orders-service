@@ -1,5 +1,5 @@
 services:
-  database:
+  orders-database:
     image: postgres:latest
     env_file:
       - .env
@@ -9,11 +9,11 @@ services:
     - 'POSTGRES_PASSWORD=${DATABASE_PASS}'
     ports:
       - '5433:5432'
-  service:
+  orders-service:
     image: mspr4-2025/orders-service
     env_file:
       - .env
     ports:
       - '8081:8080'
     depends_on:
-      - database
+      - orders-database
