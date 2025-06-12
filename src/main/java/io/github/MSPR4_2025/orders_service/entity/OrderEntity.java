@@ -1,12 +1,14 @@
 package io.github.MSPR4_2025.orders_service.entity;
 
-import java.time.Instant;
-import java.util.UUID;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -23,5 +25,4 @@ public class OrderEntity {
     private UUID productUid;
 
     private Instant createdAt = Instant.now();
-
 }

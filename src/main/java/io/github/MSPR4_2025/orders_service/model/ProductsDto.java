@@ -12,6 +12,4 @@ public class ProductsDto {
     private ProductDetailsDto details;
     private int stock;
     private String orderId;
-
-    
 }
