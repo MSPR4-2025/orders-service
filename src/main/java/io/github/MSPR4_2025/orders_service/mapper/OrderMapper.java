@@ -4,16 +4,34 @@ package io.github.MSPR4_2025.orders_service.mapper;
 import io.github.MSPR4_2025.orders_service.entity.OrderEntity;
 import io.github.MSPR4_2025.orders_service.model.OrderCreateDto;
 import io.github.MSPR4_2025.orders_service.model.OrderDto;
+import jakarta.annotation.Nullable;
 import org.mapstruct.Mapper;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface OrderMapper {
-    List<OrderDto> fromEntities(Collection<OrderEntity> entities);
+public abstract class OrderMapper {
+    // Read value from properties file
+    @Value("${app.zoneId:UTC}")
+    private String zoneId;
 
-    OrderDto fromEntity(OrderEntity entity);
+    public abstract List<OrderDto> fromEntities(Collection<OrderEntity> entities);
 
-    OrderEntity fromCreateDto(OrderCreateDto dto);
+    public abstract OrderDto fromEntity(OrderEntity entity);
+
+    public abstract OrderEntity fromCreateDto(OrderCreateDto dto);
+
+    /**
+     * Convert an {@link Instant} into the corresponding {@link OffsetDateTime}
+     * at the zoneId specified in the properties file
+     */
+    @Nullable
+    protected OffsetDateTime fromInstant(@Nullable Instant instant) {
+        return instant == null ? null : OffsetDateTime.ofInstant(instant, ZoneId.of(zoneId));
+    }
 }

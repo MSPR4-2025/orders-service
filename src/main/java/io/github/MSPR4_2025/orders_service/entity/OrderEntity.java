@@ -1,11 +1,10 @@
 package io.github.MSPR4_2025.orders_service.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -13,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity(name = "orders")
+@EntityListeners(AuditingEntityListener.class)
 public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,5 +24,6 @@ public class OrderEntity {
 
     private UUID productUid;
 
-    private Instant createdAt = Instant.now();
+    @CreatedDate
+    private Instant createdAt;
 }
