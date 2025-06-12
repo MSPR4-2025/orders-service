@@ -3,7 +3,7 @@ package io.github.MSPR4_2025.orders_service.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -11,7 +11,7 @@ import java.util.UUID;
 public class OrderDto {
     private Long id;
     private UUID uid;
-    private Instant createdAt;
+    private OffsetDateTime createdAt;
     private String customerUid;
     private ProductsDto products;
 }

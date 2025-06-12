@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,9 +51,17 @@ public class OrderController {
         }
 
         try {
-
             OrderEntity orderEntity = orderService.createOrder(orderCreate);
-            return ResponseEntity.ok(orderMapper.fromEntity(orderEntity));
+
+            // Get the url to GET the created customer
+            URI orderUri = MvcUriComponentsBuilder
+                .fromMethodCall(MvcUriComponentsBuilder
+                    .on(getClass())
+                    .getOrderById(orderEntity.getUid()))
+                .build()
+                .toUri();
+
+            return ResponseEntity.created(orderUri).build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
