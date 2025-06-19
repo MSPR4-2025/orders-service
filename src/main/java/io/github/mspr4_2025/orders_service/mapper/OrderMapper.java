@@ -1,9 +1,9 @@
-package io.github.MSPR4_2025.orders_service.mapper;
+package io.github.mspr4_2025.orders_service.mapper;
 
 
-import io.github.MSPR4_2025.orders_service.entity.OrderEntity;
-import io.github.MSPR4_2025.orders_service.model.OrderCreateDto;
-import io.github.MSPR4_2025.orders_service.model.OrderDto;
+import io.github.mspr4_2025.orders_service.entity.OrderEntity;
+import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
+import io.github.mspr4_2025.orders_service.model.OrderDto;
 import jakarta.annotation.Nullable;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Value;

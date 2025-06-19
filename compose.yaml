@@ -1,19 +1,22 @@
 services:
   orders-database:
     image: postgres:latest
+    ports:
+      - '5433:5432'
     env_file:
       - .env
     environment:
-    - 'POSTGRES_DB=${DATABASE_NAME}'
-    - 'POSTGRES_USER=${DATABASE_USER}'
-    - 'POSTGRES_PASSWORD=${DATABASE_PASS}'
-    ports:
-      - '5433:5432'
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASS}
   orders-service:
     image: ghcr.io/mspr4-2025/orders-service
-    env_file:
-      - .env
     ports:
       - '8081:8080'
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: orders-database
+      DATABASE_PORT: 5432
     depends_on:
       - orders-database

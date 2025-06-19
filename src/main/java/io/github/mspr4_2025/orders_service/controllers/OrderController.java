@@ -1,10 +1,10 @@
-package io.github.MSPR4_2025.orders_service.controllers;
+package io.github.mspr4_2025.orders_service.controllers;
 
-import io.github.MSPR4_2025.orders_service.entity.OrderEntity;
-import io.github.MSPR4_2025.orders_service.mapper.OrderMapper;
-import io.github.MSPR4_2025.orders_service.model.OrderCreateDto;
-import io.github.MSPR4_2025.orders_service.model.OrderDto;
-import io.github.MSPR4_2025.orders_service.service.OrderService;
+import io.github.mspr4_2025.orders_service.entity.OrderEntity;
+import io.github.mspr4_2025.orders_service.mapper.OrderMapper;
+import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
+import io.github.mspr4_2025.orders_service.model.OrderDto;
+import io.github.mspr4_2025.orders_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
