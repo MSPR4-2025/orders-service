@@ -4,8 +4,10 @@ package io.github.mspr4_2025.orders_service.mapper;
 import io.github.mspr4_2025.orders_service.entity.OrderEntity;
 import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
 import io.github.mspr4_2025.orders_service.model.OrderDto;
+import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
 import jakarta.annotation.Nullable;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
@@ -25,6 +27,8 @@ public abstract class OrderMapper {
     public abstract OrderDto fromEntity(OrderEntity entity);
 
     public abstract OrderEntity fromCreateDto(OrderCreateDto dto);
+
+    public abstract void updateEntityFromDto(OrderUpdateDto dto, @MappingTarget OrderEntity entity);
 
     /**
      * Convert an {@link Instant} into the corresponding {@link OffsetDateTime}

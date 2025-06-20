@@ -4,14 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
 @Setter
 public class OrderDto {
-    private Long id;
     private UUID uid;
+    private UUID customerUid;
+    private List<UUID> productsUid;
     private OffsetDateTime createdAt;
-    private String customerUid;
-    private ProductsDto products;
 }

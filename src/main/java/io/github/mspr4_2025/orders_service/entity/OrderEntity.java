@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -22,7 +23,7 @@ public class OrderEntity {
 
     private UUID customerUid;
 
-    private UUID productUid;
+    private List<UUID> productsUid;
 
     @CreatedDate
     private Instant createdAt;

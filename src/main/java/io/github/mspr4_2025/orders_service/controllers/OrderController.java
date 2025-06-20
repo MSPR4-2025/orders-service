@@ -4,16 +4,17 @@ import io.github.mspr4_2025.orders_service.entity.OrderEntity;
 import io.github.mspr4_2025.orders_service.mapper.OrderMapper;
 import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
 import io.github.mspr4_2025.orders_service.model.OrderDto;
+import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
 import io.github.mspr4_2025.orders_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class OrderController {
     private final OrderMapper orderMapper;
 
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<OrderDto>> listOrders() {
         List<OrderEntity> orderEntities = orderService.getAllOrders();
 
@@ -34,58 +35,51 @@ public class OrderController {
 
     @GetMapping("/{uid}")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable UUID uid) {
-        Optional<OrderEntity> orderEntity = orderService.getOrderByUid(uid);
+        OrderEntity orderEntity = orderService.getOrderByUid(uid);
 
-        return orderEntity
-            .map(entity ->
-                ResponseEntity.ok(orderMapper.fromEntity(entity)))
-            .orElseGet(() ->
-                ResponseEntity.notFound().build());
+        return ResponseEntity.ok(orderMapper.fromEntity(orderEntity));
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<OrderDto> createOrder(@RequestBody OrderCreateDto orderCreate) {
-        log.info("Creating order: " + orderCreate + " productUid : " + orderCreate.getProductUid() + " customerUid : " + orderCreate.getCustomerUid());
-        if (orderCreate.getCustomerUid() == null || orderCreate.getProductUid() == null) {
+        log.info("Creating order: {}, productsUid: {}, customerUid: {}", orderCreate, orderCreate.getProductsUid(), orderCreate.getCustomerUid());
+
+        if (orderCreate.getCustomerUid() == null || CollectionUtils.isEmpty(orderCreate.getProductsUid())) {
             return ResponseEntity.badRequest().build();
         }
 
-        try {
-            OrderEntity orderEntity = orderService.createOrder(orderCreate);
+        OrderEntity orderEntity = orderService.createOrder(orderCreate);
 
-            // Get the url to GET the created customer
-            URI orderUri = MvcUriComponentsBuilder
-                .fromMethodCall(MvcUriComponentsBuilder
-                    .on(getClass())
-                    .getOrderById(orderEntity.getUid()))
-                .build()
-                .toUri();
+        // Get the url to GET the created customer
+        URI orderUri = MvcUriComponentsBuilder
+            .fromMethodCall(MvcUriComponentsBuilder
+                .on(getClass())
+                .getOrderById(orderEntity.getUid()))
+            .build()
+            .toUri();
 
-            return ResponseEntity.created(orderUri).build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-
+        return ResponseEntity.created(orderUri).build();
     }
 
     @DeleteMapping("/{uid}")
     public ResponseEntity<Void> deleteOrder(@PathVariable UUID uid) {
+        log.info("Deleting order: {}", uid);
+
         orderService.deleteOrderByUid(uid);
-        log.info("Deleting order: " + uid);
+
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{uid}")
-    public ResponseEntity<Void> updateOrder(@PathVariable UUID uid, @RequestBody OrderCreateDto orderUpdate) {
-        if (orderUpdate.getCustomerUid() == null || orderUpdate.getProductUid() == null) {
+    public ResponseEntity<Void> updateOrder(@PathVariable UUID uid, @RequestBody OrderUpdateDto orderUpdate) {
+        log.info("Updating order: {}, productsUid: {}, customerUid: {}", uid, orderUpdate.getProductsUid(), orderUpdate.getCustomerUid());
+
+        if (orderUpdate.getCustomerUid() == null || CollectionUtils.isEmpty(orderUpdate.getProductsUid())) {
             return ResponseEntity.badRequest().build();
         }
-        try {
-            orderService.updateOrderByUid(uid, orderUpdate);
-            log.info("Updating order: " + uid + " productUid : " + orderUpdate.getProductUid() + " customerUid : " + orderUpdate.getCustomerUid());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+
+        orderService.updateOrderByUid(uid, orderUpdate);
+
+        return ResponseEntity.ok().build();
     }
 }

@@ -3,6 +3,7 @@ package io.github.mspr4_2025.orders_service.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -10,7 +11,7 @@ import java.util.UUID;
 public class OrderCreateDto {
 
     private UUID customerUid;
-    private UUID productUid;
+    private List<UUID> productsUid;
 
 
 }

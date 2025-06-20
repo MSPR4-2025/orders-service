@@ -1,0 +1,4 @@
+INSERT INTO orders(id, uid, customer_uid, products_uid)
+VALUES
+(1, '939c7754-d2b8-43c9-b930-6740f3a0ee61', '939c7754-d2b8-43c9-b710-6740f3a0ee61', ARRAY['939c7754-d2b9-43c8-b820-6740f3a0ee61', '939c7754-d2b9-43c8-b820-6740f3a0ee61']),
+(2, '939c7754-d2b8-43c9-b930-6740f3a0ee62', '939c7754-d2b8-43c9-b710-6740f3a0ee62', ARRAY['939c7754-d2b9-43c8-b820-6740f3a0ee61']);
