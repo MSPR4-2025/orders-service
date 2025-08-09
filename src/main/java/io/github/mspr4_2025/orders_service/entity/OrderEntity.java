@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import jakarta.persistence.Column;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import io.github.mspr4_2025.orders_service.enums.OrderStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -21,10 +22,17 @@ public class OrderEntity {
 
     private UUID uid = UUID.randomUUID();
 
+    @Column(name="customer_uid")
     private UUID customerUid;
 
+    @Column(name="products_uid")
     private List<UUID> productsUid;
 
     @CreatedDate
+    @Column(name="created_at")
     private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="order_status")
+    private OrderStatus orderStatus;
 }
