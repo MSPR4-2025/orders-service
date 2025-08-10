@@ -7,10 +7,13 @@ import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
 import io.github.mspr4_2025.orders_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +24,25 @@ import java.util.UUID;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
+    private final RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
+    @Value("order_events_exchange")
+    private String eventsExchange;
+
+    @Value("product_service_stock_check_queue")
+    private String stockCheckQueue;
+
+    @Value("order_service_confirmation_queue")
+    private String orderConfirmationQueue;
+
+    @Value("create_order_routing")
+    private String createOrderRouting;
+
+
 
     public List<OrderEntity> getAllOrders() {
         return orderRepository.findAll();
@@ -42,6 +64,14 @@ public class OrderService {
 
     public OrderEntity createOrder(OrderCreateDto orderCreate) {
         OrderEntity entity = orderMapper.fromCreateDto(orderCreate);
+
+        try{
+
+            String orderJson = objectMapper.writeValueAsString(orderCreate);
+            rabbitTemplate.convertAndSend(eventsExchange, createOrderRouting, orderJson);
+        } catch (Exception ex){
+            log.info("exception: " + ex);
+        }
 
         orderRepository.save(entity);
         log.info("Order created: {}, productsUid: {}, customerUid: {}", entity.getUid(), entity.getProductsUid(), entity.getCustomerUid());
