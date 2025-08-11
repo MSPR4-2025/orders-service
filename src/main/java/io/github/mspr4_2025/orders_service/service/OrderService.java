@@ -1,6 +1,7 @@
 package io.github.mspr4_2025.orders_service.service;
 
 import io.github.mspr4_2025.orders_service.entity.OrderEntity;
+import io.github.mspr4_2025.orders_service.enums.OrderStatus;
 import io.github.mspr4_2025.orders_service.mapper.OrderMapper;
 import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
 import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
@@ -64,10 +65,15 @@ public class OrderService {
 
     public OrderEntity createOrder(OrderCreateDto orderCreate) {
         OrderEntity entity = orderMapper.fromCreateDto(orderCreate);
+        entity.setOrderStatus(OrderStatus.WAITING);
 
         try{
-
-            String orderJson = objectMapper.writeValueAsString(orderCreate);
+            
+            
+            String orderJson = objectMapper.createObjectNode()
+                .putPOJO("order", orderCreate)
+                .put("orderUid", entity.getUid().toString())
+                .toString();
             rabbitTemplate.convertAndSend(eventsExchange, createOrderRouting, orderJson);
         } catch (Exception ex){
             log.info("exception: " + ex);
