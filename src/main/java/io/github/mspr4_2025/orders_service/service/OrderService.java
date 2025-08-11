@@ -8,13 +8,19 @@ import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
 import io.github.mspr4_2025.orders_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.Exchange;
+import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.QueueBinding;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +49,8 @@ public class OrderService {
     @Value("create_order_routing")
     private String createOrderRouting;
 
+    @Value("order_status_routing")
+    private String orderConfirmationStatusRouting;
 
 
     public List<OrderEntity> getAllOrders() {
@@ -103,6 +111,40 @@ public class OrderService {
         orderMapper.updateEntityFromDto(orderUpdate, orderEntity);
 
         orderRepository.save(orderEntity);
+    }
+
+    @RabbitListener(
+        bindings = @QueueBinding(
+            value = @Queue(value = "order_service_confirmation_queue"),
+            exchange = @Exchange(value = "order_events_exchange", type="topic"),
+            key = "order_status_routing"
+        )
+    )
+    public void handleOrderConfirmationMessage(String message) {
+        try {
+            log.info("message received, confirming order. Message: " + message);
+            
+            JsonNode orderNode = objectMapper.readTree(message);
+            JsonNode orderUidNode = orderNode.get("orderUid");
+            JsonNode orderStatusNode = orderNode.get("orderStatus");
+
+            if (orderUidNode == null  || orderStatusNode == null ) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid message");
+            }
+
+            OrderEntity order = orderRepository.findByUid(UUID.fromString(orderUidNode.asText())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+            
+            if (orderStatusNode.asText().equals("CONFIRMED")) {
+                order.setOrderStatus(OrderStatus.CONFIRMED);
+            } else {
+                order.setOrderStatus(OrderStatus.CANCELED);
+            }
+
+            orderRepository.save(order);
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
 }
