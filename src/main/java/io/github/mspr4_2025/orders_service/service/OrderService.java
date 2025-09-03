@@ -6,6 +6,7 @@ import io.github.mspr4_2025.orders_service.mapper.OrderMapper;
 import io.github.mspr4_2025.orders_service.model.OrderCreateDto;
 import io.github.mspr4_2025.orders_service.model.OrderUpdateDto;
 import io.github.mspr4_2025.orders_service.repository.OrderRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.Exchange;
@@ -17,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 @Slf4j
+@Transactional(isolation = Isolation.SERIALIZABLE)
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
@@ -38,19 +40,34 @@ public class OrderService {
 
 
     @Value("order_events_exchange")
-    private String eventsExchange;
+    private String orderEventsExchange;
 
-    @Value("product_service_stock_check_queue")
+    @Value("stock_confirmation_queue")
+    private String stockConfirmationQueue;
+
+    @Value("stock_check_queue")
     private String stockCheckQueue;
 
-    @Value("order_service_confirmation_queue")
-    private String orderConfirmationQueue;
+    @Value("customer_verification_queue")
+    private String customerVerificationQueue;
 
-    @Value("create_order_routing")
-    private String createOrderRouting;
+    @Value("customer_confirmation_queue")
+    private String customerConfirmationQueue;
 
-    @Value("order_status_routing")
-    private String orderConfirmationStatusRouting;
+    @Value("order.created")
+    private String orderCreatedKey;
+
+    @Value("customer.verification.requested")
+    private String customerVerificationRequestedKey;
+    
+    @Value("customer.verification.confirmed")
+    private String customerVerificationConfirmedKey;
+
+    @Value("product.verification.requested")
+    private String productVerificationRequestedKey;
+
+    @Value("product.verification.confirmed")
+    private String productVerificationConfirmedKey;
 
 
     public List<OrderEntity> getAllOrders() {
@@ -82,7 +99,7 @@ public class OrderService {
                 .putPOJO("order", orderCreate)
                 .put("orderUid", entity.getUid().toString())
                 .toString();
-            rabbitTemplate.convertAndSend(eventsExchange, createOrderRouting, orderJson);
+            rabbitTemplate.convertAndSend(orderEventsExchange, orderCreatedKey, orderJson);
         } catch (Exception ex){
             log.info("exception: " + ex);
         }
@@ -115,9 +132,9 @@ public class OrderService {
 
     @RabbitListener(
         bindings = @QueueBinding(
-            value = @Queue(value = "order_service_confirmation_queue"),
+            value = @Queue(value = "stock_confirmation_queue"),
             exchange = @Exchange(value = "order_events_exchange", type="topic"),
-            key = "order_status_routing"
+            key = "product.verification.confirmed"
         )
     )
     public void handleOrderConfirmationMessage(String message) {
@@ -126,25 +143,76 @@ public class OrderService {
             
             JsonNode orderNode = objectMapper.readTree(message);
             JsonNode orderUidNode = orderNode.get("orderUid");
-            JsonNode orderStatusNode = orderNode.get("orderStatus");
+            JsonNode stockCheckStatusNode = orderNode.get("stockCheckStatus");
 
-            if (orderUidNode == null  || orderStatusNode == null ) {
+            if (orderUidNode == null  || stockCheckStatusNode == null ) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid message");
+            }
+
+            log.info("orderUid: " + orderUidNode.asText());
+            OrderEntity order = orderRepository.findByUid(UUID.fromString(orderUidNode.asText())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+            
+            if (stockCheckStatusNode.asText().equals("CONFIRMED")) {
+                log.info("updating customerValidated to true");
+                order.setStockValidated(true);
+                orderStatusUpdate(order);
+            } else {
+                log.info("updating customerValidated to false");
+                order.setStockValidated(false);
+                orderStatusUpdate(order);
+            }
+
+        } catch (Exception e) {
+            log.info("handleOrderConfirmationMessage exception: " + e.getMessage() );
+        }
+    }
+
+    @RabbitListener(
+        bindings = @QueueBinding(
+            value = @Queue(value="customer_confirmation_queue"),
+            exchange = @Exchange(value = "order_events_exchange", type="topic"),
+            key="customer.verification.confirmed"
+        )
+    )
+    public void handleCustomerConfirmationMessage(String message){
+        try {
+            log.info("message received, confirming order. Message: " + message);
+            
+            JsonNode orderNode = objectMapper.readTree(message);
+            JsonNode orderUidNode = orderNode.get("orderUid");
+            JsonNode customerCheckStatusNode = orderNode.get("customerCheckStatus");
+
+            if (orderUidNode == null  || customerCheckStatusNode == null ) {
+                log.error("orderService.handleCustomerConfirmationMessage invalid message. ");
             }
 
             OrderEntity order = orderRepository.findByUid(UUID.fromString(orderUidNode.asText())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
             
-            if (orderStatusNode.asText().equals("CONFIRMED")) {
-                order.setOrderStatus(OrderStatus.CONFIRMED);
+            if (customerCheckStatusNode.asText().equals("CONFIRMED")) {
+                log.info("updating customerValidated to true");
+                order.setCustomerValidated(true);
+                orderStatusUpdate(order);
             } else {
-                order.setOrderStatus(OrderStatus.CANCELED);
+                log.info("updating customerValidated to false");
+                order.setCustomerValidated(false);
+                orderStatusUpdate(order);
             }
 
-            orderRepository.save(order);
-
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            log.error("Exception OrderService.handleCustomerConfirmationMessage : " + e.getMessage());
+            
         }
+    }
+
+    
+    private void orderStatusUpdate(OrderEntity order){
+        if(order.isCustomerValidated() && order.isCustomerValidated()){
+            order.setOrderStatus(OrderStatus.CONFIRMED);
+        } else {
+            order.setOrderStatus(OrderStatus.WAITING);
+        }
+
+        orderRepository.save(order);
     }
 
 }

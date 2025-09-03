@@ -5,7 +5,6 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -16,15 +15,16 @@ import org.springframework.context.annotation.Bean;
 public class RabbitMQConfig {
     
     public static final String orderEventsExchange = "order_events_exchange";
-
-
-    public static final String stockCheckQueue = "product_service_stock_check_queue";
-    public static final String orderConfirmationQueue = "order_service_confirmation_queue";
-
-
-    public static final String createOrderRouting = "create_order_routing";
-    public static final String orderConfirmationStatusRouting = "order_status_routing";
-
+    public static final String customerVerificationQueue = "customer_verification_queue";
+    public static final String customerConfirmationQueue = "customer_confirmation_queue";
+    public static final String stockCheckQueue = "stock_check_queue";
+    public static final String stockConfirmationQueue = "stock_confirmation_queue";
+    
+    public static final String orderCreatedKey = "order.created";
+    public static final String customerVerificationRequestedKey = "customer.verification.requested";
+    public static final String customerVerificationConfirmedKey = "customer.verification.confirmed";
+    public static final String productVerificationRequestedKey = "product.verification.requested";
+    public static final String productVerificationConfirmedKey = "product.verification.confirmed";
 
     @Bean
     public CachingConnectionFactory cf() {
@@ -50,33 +50,62 @@ public class RabbitMQConfig {
         return new RabbitAdmin(cf);
             }
 
+    
+    
     @Bean
     public TopicExchange orderEventsExchange() {
-        return new TopicExchange(orderEventsExchange);
+        return new TopicExchange(orderEventsExchange, true, false);
+    }
+
+    @Bean
+    public Queue customerVerificationQueue() {
+        return new Queue(customerVerificationQueue, true);
+    }
+
+    @Bean
+    public Queue customerConfirmationQueue() {
+        return new Queue(customerConfirmationQueue, true);
     }
 
     @Bean
     public Queue stockCheckQueue() {
-        return QueueBuilder.durable(stockCheckQueue)
-        .build();
+        return new Queue(stockCheckQueue, true);
     }
 
     @Bean
-    public Queue orderConfirmationQueue() {
-        return QueueBuilder.durable(orderConfirmationQueue)
-        
-        .build();
-    }
-   
-    @Bean
-    public Binding orderCreateBinding(TopicExchange orderEventsExchange, Queue stockCheckQueue) {
-        return BindingBuilder.bind(stockCheckQueue).to(orderEventsExchange).with(createOrderRouting);
+    public Queue stockConfirmationQueue() {
+        return new Queue(stockConfirmationQueue, true);
     }
 
     @Bean
-    public Binding orderConfirmationBinding(TopicExchange orderEventsExchange, Queue orderConfirmationQueue) {
-        return BindingBuilder.bind(orderConfirmationQueue).to(orderEventsExchange).with(orderConfirmationStatusRouting);
+    public Binding customerVerificationBinding() {
+        return BindingBuilder
+                .bind(customerVerificationQueue())
+                .to(orderEventsExchange())
+                .with(customerVerificationRequestedKey);
     }
 
- 
+    @Bean
+    public Binding customerConfirmationBinding() {
+        return BindingBuilder
+                .bind(customerConfirmationQueue())
+                .to(orderEventsExchange())
+                .with(customerVerificationConfirmedKey);
+    }
+    
+    @Bean
+    public Binding stockCheckBinding() {
+        return BindingBuilder
+                .bind(stockCheckQueue())
+                .to(orderEventsExchange())
+                .with(productVerificationRequestedKey);
+    }
+    
+    @Bean
+    public Binding stockConfirmationBinding() {
+        return BindingBuilder
+                .bind(stockConfirmationQueue())
+                .to(orderEventsExchange())
+                .with(productVerificationConfirmedKey);
+    }
 }

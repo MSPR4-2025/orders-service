@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
-import jakarta.persistence.Column;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import io.github.mspr4_2025.orders_service.enums.OrderStatus;
 import java.time.Instant;
@@ -35,4 +34,10 @@ public class OrderEntity {
     @Enumerated(EnumType.STRING)
     @Column(name="order_status")
     private OrderStatus orderStatus;
+
+    @Column(name="customer_validated")
+    private boolean customerValidated;
+
+    @Column(name="stock_validated")
+    private boolean stockValidated;
 }
