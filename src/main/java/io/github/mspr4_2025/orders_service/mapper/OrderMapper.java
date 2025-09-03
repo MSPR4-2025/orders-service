@@ -16,7 +16,7 @@ import java.time.ZoneId;
 import java.util.Collection;
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper
 public abstract class OrderMapper {
     // Read value from properties file
     @Value("${app.zoneId:UTC}")
