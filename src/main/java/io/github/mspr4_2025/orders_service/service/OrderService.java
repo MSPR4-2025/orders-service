@@ -206,7 +206,7 @@ public class OrderService {
 
     
     private void orderStatusUpdate(OrderEntity order){
-        if(order.isCustomerValidated() && order.isCustomerValidated()){
+        if(order.isCustomerValidated() && order.isStockValidated()){
             order.setOrderStatus(OrderStatus.CONFIRMED);
         } else {
             order.setOrderStatus(OrderStatus.WAITING);

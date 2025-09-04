@@ -1,4 +1,2 @@
-INSERT INTO orders(id, uid, customer_uid, products_uid)
-VALUES
-(1, '939c7754-d2b8-43c9-b930-6740f3a0ee61', '939c7754-d2b8-43c9-b710-6740f3a0ee61', ARRAY['939c7754-d2b9-43c8-b820-6740f3a0ee61', '939c7754-d2b9-43c8-b820-6740f3a0ee61']),
-(2, '939c7754-d2b8-43c9-b930-6740f3a0ee62', '939c7754-d2b8-43c9-b710-6740f3a0ee62', ARRAY['939c7754-d2b9-43c8-b820-6740f3a0ee61']);
+INSERT INTO orders (customer_validated, stock_validated, created_at, id, customer_uid, uid, order_status, products_uid) VALUES(true, true, '2025-09-04 09:27:17.248', 1, '939c7754-d2b8-43c9-b710-6740f3a0ee61', 'f2074e48-ea77-43e2-8cf9-6cfbda3c0315', 'CONFIRMED', 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e');
+INSERT INTO orders (customer_validated, stock_validated, created_at, id, customer_uid, uid, order_status, products_uid) VALUES(true, false, '2025-09-04 09:27:48.348', 2, '4c5ef801-dbb9-4e77-8c4a-749cd80b7d8e', 'c5398cb5-558a-443d-96dd-13720e8ec3b3', 'WAITING', '915d948f-6b1b-4235-9728-f62f1c04e065');
